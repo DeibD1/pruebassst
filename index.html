@@ -510,7 +510,7 @@
 <script>
 // ===== DEFAULT CONFIG =====
 const DEFAULT = {
-  flowUrl: '', // ← pegar URL de Power Automate aquí
+  flowUrl: 'https://default0330693069ae441dbd8a116f75e7e4.e5.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9cc33d9cb5004875a136aa8002878a90/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=BT7i9l7FFxDqO_49WRYcqMVqdlzC-FmdB9B7DbOAwGQ',
   members: [
     { name: 'Juan García', role: 'Inspector' },
     { name: 'María López', role: 'Coordinadora' },
@@ -529,9 +529,12 @@ let state = {
 };
 
 function loadConfig() {
+  // Forzar URL embebida si no hay config guardada con URL
   try {
     const saved = localStorage.getItem('sst_config');
-    return saved ? JSON.parse(saved) : { ...DEFAULT };
+    const parsed = saved ? JSON.parse(saved) : { ...DEFAULT };
+    if (!parsed.flowUrl) parsed.flowUrl = DEFAULT.flowUrl;
+    return parsed;
   } catch { return { ...DEFAULT }; }
 }
 
