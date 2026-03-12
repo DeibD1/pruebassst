@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SST · Registro de Actividades</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --safety-yellow: #F5C518;
+    --hard-black: #0D0D0D;
+    --steel: #1C1C1E;
+    --mid: #2C2C2E;
+    --muted: #8E8E93;
+    --white: #F5F5F7;
+    --success: #30D158;
+    --danger: #FF453A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--hard-black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* --- HEADER --- */
+  .header {
+    padding: 28px 24px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border-bottom: 1px solid #222;
+  }
+  .badge {
+    background: var(--safety-yellow);
+    color: var(--hard-black);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    display: inline-block;
+  }
+  .header-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 1px;
+    line-height: 1;
+    color: var(--white);
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 300;
+  }
+  .icon-hard-hat {
+    font-size: 36px;
+    line-height: 1;
+  }
+
+  /* --- MAIN --- */
+  .main { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* --- MEMBER SELECT --- */
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--safety-yellow);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .member-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .member-btn {
+    background: var(--steel);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+  }
+  .member-btn:active { transform: scale(0.97); }
+  .member-btn.selected {
+    border-color: var(--safety-yellow);
+    background: #282800;
+  }
+  .member-btn.selected .avatar { background: var(--safety-yellow); color: var(--hard-black); }
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--mid);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: all 0.18s;
+  }
+  .member-name { line-height: 1.2; }
+  .member-role { font-size: 10px; color: var(--muted); font-weight: 300; }
+
+  /* --- CATEGORY --- */
+  .cat-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .cat-scroll::-webkit-scrollbar { display: none; }
+  .cat-chip {
+    background: var(--steel);
+    border: 1px solid #333;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .cat-chip:active { transform: scale(0.95); }
+  .cat-chip.selected {
+    background: var(--safety-yellow);
+    border-color: var(--safety-yellow);
+    color: var(--hard-black);
+    font-weight: 600;
+  }
+
+  /* --- CAMERA AREA --- */
+  .camera-zone {
+    background: var(--steel);
+    border: 2px dashed #333;
+    border-radius: 16px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .camera-zone:hover { border-color: var(--safety-yellow); }
+  .camera-zone.has-preview { border-style: solid; border-color: var(--safety-yellow); }
+  #preview-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+  }
+  .camera-icon { font-size: 40px; opacity: 0.4; }
+  .camera-hint { font-size: 13px; color: var(--muted); text-align: center; }
+  .camera-hint strong { color: var(--white); display: block; font-size: 15px; margin-bottom: 3px; }
+  #file-input { display: none; }
+
+  .preview-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+    border-radius: 14px;
+    display: flex;
+    align-items: flex-end;
+    padding: 14px;
+  }
+  .preview-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+  }
+  .change-btn {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: white;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* --- NOTE --- */
+  .note-input {
+    background: var(--steel);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    width: 100%;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .note-input::placeholder { color: var(--muted); }
+  .note-input:focus { border-color: var(--safety-yellow); }
+
+  /* --- UPLOAD BTN --- */
+  .upload-btn {
+    background: var(--safety-yellow);
+    color: var(--hard-black);
+    border: none;
+    border-radius: 14px;
+    padding: 18px;
+    width: 100%;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-btn:active { transform: scale(0.98); }
+  .upload-btn:disabled {
+    background: #333;
+    color: #555;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* --- STATES --- */
+  .state-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(13,13,13,0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .state-overlay.visible { opacity: 1; pointer-events: all; }
+  .state-icon { font-size: 64px; }
+  .state-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 1px; }
+  .state-sub { font-size: 14px; color: var(--muted); text-align: center; max-width: 260px; }
+
+  /* progress */
+  .progress-bar-wrap {
+    width: 200px;
+    height: 4px;
+    background: #222;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--safety-yellow);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  /* success */
+  .success-ring {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(48,209,88,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+  }
+  .reset-btn {
+    background: var(--steel);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 14px 28px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  /* --- CONFIG PANEL --- */
+  .config-btn {
+    position: fixed;
+    top: 20px; right: 20px;
+    background: var(--mid);
+    border: 1px solid #333;
+    border-radius: 50%;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 50;
+    color: var(--muted);
+  }
+  .config-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .config-panel.open { opacity: 1; pointer-events: all; }
+  .config-sheet {
+    background: var(--steel);
+    border-radius: 20px 20px 0 0;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+  }
+  .config-panel.open .config-sheet { transform: translateY(0); }
+  .config-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; }
+  .config-sub { font-size: 12px; color: var(--muted); margin-top: -10px; }
+  .config-input {
+    background: var(--mid);
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+  }
+  .config-input:focus { border-color: var(--safety-yellow); }
+  .config-save {
+    background: var(--safety-yellow);
+    color: var(--hard-black);
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    width: 100%;
+  }
+  .config-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    padding: 4px;
+  }
+
+  .timestamp {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    padding-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Config Button -->
+<button class="config-btn" onclick="openConfig()" title="Configurar">⚙️</button>
+
+<!-- Header -->
+<div class="header">
+  <div class="icon-hard-hat">🦺</div>
+  <div>
+    <div class="badge">SST · SEGURIDAD</div>
+    <div class="header-title">Registro de Actividad</div>
+    <div class="header-sub">Sube fotos directo a SharePoint</div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Member -->
+  <div>
+    <div class="section-label">¿Quién registra?</div>
+    <div class="member-grid" id="member-grid">
+      <!-- generado por JS -->
+    </div>
+  </div>
+
+  <!-- Category -->
+  <div>
+    <div class="section-label">Categoría de actividad</div>
+    <div class="cat-scroll" id="cat-scroll">
+      <!-- generado por JS -->
+    </div>
+  </div>
+
+  <!-- Camera -->
+  <div>
+    <div class="section-label">Fotografía</div>
+    <div class="camera-zone" id="camera-zone" onclick="document.getElementById('file-input').click()">
+      <div class="camera-icon">📷</div>
+      <div class="camera-hint">
+        <strong>Tomar foto o seleccionar</strong>
+        Toca para abrir la cámara
+      </div>
+      <input type="file" id="file-input" accept="image/*" capture="environment">
+      <img id="preview-img" style="display:none">
+      <div class="preview-overlay" id="preview-overlay" style="display:none">
+        <span class="preview-label" id="preview-label">foto.jpg</span>
+        <button class="change-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">Cambiar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note -->
+  <div>
+    <div class="section-label">Observación (opcional)</div>
+    <textarea class="note-input" id="note-input" rows="2" placeholder="Describe brevemente la actividad registrada…"></textarea>
+  </div>
+
+  <!-- Timestamp -->
+  <div class="timestamp" id="timestamp-display"></div>
+
+  <!-- Upload -->
+  <button class="upload-btn" id="upload-btn" onclick="uploadPhoto()" disabled>
+    <span>⬆</span> SUBIR A SHAREPOINT
+  </button>
+
+</div>
+
+<!-- Loading overlay -->
+<div class="state-overlay" id="loading-overlay">
+  <div class="state-icon">📡</div>
+  <div class="state-title">Subiendo foto…</div>
+  <div class="state-sub">No cierres esta pantalla</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+
+<!-- Success overlay -->
+<div class="state-overlay" id="success-overlay">
+  <div class="success-ring">✅</div>
+  <div class="state-title" style="color: var(--success)">¡Foto subida!</div>
+  <div class="state-sub" id="success-detail">Guardada en SharePoint correctamente</div>
+  <button class="reset-btn" onclick="resetForm()">Subir otra foto</button>
+</div>
+
+<!-- Error overlay -->
+<div class="state-overlay" id="error-overlay">
+  <div class="state-icon">⚠️</div>
+  <div class="state-title" style="color: var(--danger)">Error al subir</div>
+  <div class="state-sub" id="error-detail">Verifica tu conexión e intenta de nuevo</div>
+  <button class="reset-btn" onclick="hideOverlays()">Reintentar</button>
+</div>
+
+<!-- Config Panel -->
+<div class="config-panel" id="config-panel" onclick="if(event.target===this)closeConfig()">
+  <div class="config-sheet">
+    <div>
+      <div class="config-title">⚙ Configuración</div>
+      <div class="config-sub">Ingresa la URL del Flow de Power Automate y los miembros del equipo</div>
+    </div>
+    <div>
+      <div class="section-label">URL del Flow (Power Automate)</div>
+      <input class="config-input" id="cfg-flow-url" type="url" placeholder="https://prod-XX.XX.logic.azure.com/workflows/...">
+    </div>
+    <div>
+      <div class="section-label">Miembros del equipo (uno por línea)</div>
+      <textarea class="config-input" id="cfg-members" rows="4" placeholder="Juan García|Inspector&#10;María López|Coordinadora&#10;Carlos Ruiz|Técnico&#10;Ana Torres|Supervisora"></textarea>
+    </div>
+    <div>
+      <div class="section-label">Categorías (separadas por coma)</div>
+      <input class="config-input" id="cfg-categories" type="text" placeholder="Inspección, EPP, Capacitación, Incidente, Mantenimiento">
+    </div>
+    <button class="config-save" onclick="saveConfig()">GUARDAR</button>
+    <button class="config-close" onclick="closeConfig()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ===== DEFAULT CONFIG =====
+const DEFAULT = {
+  flowUrl: '', // ← pegar URL de Power Automate aquí
+  members: [
+    { name: 'Juan García', role: 'Inspector' },
+    { name: 'María López', role: 'Coordinadora' },
+    { name: 'Carlos Ruiz', role: 'Técnico' },
+    { name: 'Ana Torres', role: 'Supervisora' },
+  ],
+  categories: ['Inspección', 'EPP', 'Capacitación', 'Incidente', 'Mantenimiento', 'Emergencia']
+};
+
+// ===== STATE =====
+let state = {
+  member: null,
+  category: null,
+  file: null,
+  config: loadConfig()
+};
+
+function loadConfig() {
+  try {
+    const saved = localStorage.getItem('sst_config');
+    return saved ? JSON.parse(saved) : { ...DEFAULT };
+  } catch { return { ...DEFAULT }; }
+}
+
+function saveConfig() {
+  const url = document.getElementById('cfg-flow-url').value.trim();
+  const membersRaw = document.getElementById('cfg-members').value.trim();
+  const catsRaw = document.getElementById('cfg-categories').value.trim();
+
+  const members = membersRaw.split('\n').filter(Boolean).map(line => {
+    const [name, role] = line.split('|');
+    return { name: name?.trim() || line.trim(), role: role?.trim() || 'SST' };
+  });
+
+  const categories = catsRaw.split(',').map(c => c.trim()).filter(Boolean);
+
+  state.config = { flowUrl: url, members: members.length ? members : DEFAULT.members, categories: categories.length ? categories : DEFAULT.categories };
+  try { localStorage.setItem('sst_config', JSON.stringify(state.config)); } catch {}
+  closeConfig();
+  renderAll();
+}
+
+function openConfig() {
+  document.getElementById('cfg-flow-url').value = state.config.flowUrl || '';
+  document.getElementById('cfg-members').value = state.config.members.map(m => `${m.name}|${m.role}`).join('\n');
+  document.getElementById('cfg-categories').value = state.config.categories.join(', ');
+  document.getElementById('config-panel').classList.add('open');
+}
+function closeConfig() { document.getElementById('config-panel').classList.remove('open'); }
+
+// ===== RENDER =====
+function renderAll() {
+  state.member = null; state.category = null;
+  renderMembers();
+  renderCategories();
+  checkReady();
+}
+
+function initials(name) {
+  return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+
+function renderMembers() {
+  const grid = document.getElementById('member-grid');
+  grid.innerHTML = '';
+  state.config.members.forEach((m, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'member-btn';
+    btn.innerHTML = `<div class="avatar">${initials(m.name)}</div><div class="member-name">${m.name}<div class="member-role">${m.role}</div></div>`;
+    btn.onclick = () => selectMember(i, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function renderCategories() {
+  const scroll = document.getElementById('cat-scroll');
+  scroll.innerHTML = '';
+  state.config.categories.forEach((c, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip';
+    chip.textContent = c;
+    chip.onclick = () => selectCategory(i, chip);
+    scroll.appendChild(chip);
+  });
+}
+
+function selectMember(idx, btn) {
+  document.querySelectorAll('.member-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.member = state.config.members[idx];
+  checkReady();
+}
+
+function selectCategory(idx, chip) {
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+  chip.classList.add('selected');
+  state.category = state.config.categories[idx];
+  checkReady();
+}
+
+// ===== FILE INPUT =====
+document.getElementById('file-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  state.file = file;
+  const url = URL.createObjectURL(file);
+  const img = document.getElementById('preview-img');
+  img.src = url; img.style.display = 'block';
+  document.getElementById('preview-overlay').style.display = 'flex';
+  document.getElementById('preview-label').textContent = file.name;
+  document.getElementById('camera-zone').classList.add('has-preview');
+  document.querySelector('.camera-icon').style.display = 'none';
+  document.querySelector('.camera-hint').style.display = 'none';
+  checkReady();
+});
+
+function checkReady() {
+  const ok = state.member && state.category && state.file;
+  document.getElementById('upload-btn').disabled = !ok;
+}
+
+// ===== TIMESTAMP =====
+function updateTimestamp() {
+  const now = new Date();
+  const s = now.toLocaleDateString('es-CO', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
+    + ' · ' + now.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' });
+  document.getElementById('timestamp-display').textContent = s;
+}
+setInterval(updateTimestamp, 30000);
+updateTimestamp();
+
+// ===== UPLOAD =====
+async function uploadPhoto() {
+  if (!state.config.flowUrl) {
+    openConfig();
+    return;
+  }
+
+  showOverlay('loading');
+  animateProgress();
+
+  try {
+    const base64 = await toBase64(state.file);
+    const now = new Date();
+    const ts = now.toISOString().replace(/[:.]/g,'-').slice(0,19);
+    const memberSlug = state.member.name.replace(/\s+/g,'_');
+    const fileName = `SST_${state.category}_${memberSlug}_${ts}.jpg`;
+
+    const payload = {
+      fileName,
+      member: state.member.name,
+      role: state.member.role,
+      category: state.category,
+      note: document.getElementById('note-input').value.trim(),
+      timestamp: now.toISOString(),
+      imageBase64: base64.split(',')[1]
+    };
+
+    const response = await fetch(state.config.flowUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    document.getElementById('success-detail').textContent =
+      `${fileName} guardada en SharePoint · ${state.category}`;
+    showOverlay('success');
+
+  } catch (err) {
+    document.getElementById('error-detail').textContent = err.message || 'Error desconocido';
+    showOverlay('error');
+  }
+}
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+let progressTimer;
+function animateProgress() {
+  const bar = document.getElementById('progress-bar');
+  let w = 0;
+  clearInterval(progressTimer);
+  progressTimer = setInterval(() => {
+    w = Math.min(w + Math.random() * 8, 85);
+    bar.style.width = w + '%';
+  }, 200);
+}
+
+function showOverlay(name) {
+  clearInterval(progressTimer);
+  if (name === 'success') document.getElementById('progress-bar').style.width = '100%';
+  hideOverlays();
+  document.getElementById(name + '-overlay').classList.add('visible');
+}
+function hideOverlays() {
+  document.querySelectorAll('.state-overlay').forEach(o => o.classList.remove('visible'));
+}
+
+function resetForm() {
+  hideOverlays();
+  state.member = null; state.category = null; state.file = null;
+  document.querySelectorAll('.member-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('preview-img').style.display = 'none';
+  document.getElementById('preview-overlay').style.display = 'none';
+  document.getElementById('camera-zone').classList.remove('has-preview');
+  document.querySelector('.camera-icon').style.display = '';
+  document.querySelector('.camera-hint').style.display = '';
+  document.getElementById('note-input').value = '';
+  document.getElementById('file-input').value = '';
+  document.getElementById('progress-bar').style.width = '0%';
+  checkReady();
+  updateTimestamp();
+}
+
+// ===== INIT =====
+renderAll();
+</script>
+</body>
+</html>
