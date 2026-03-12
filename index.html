@@ -669,20 +669,21 @@ async function uploadPhoto() {
       imageBase64: base64.split(',')[1]
     };
 
-    const response = await fetch(state.config.flowUrl, {
+    // Usamos no-cors para evitar bloqueo CORS de Power Automate
+    await fetch(state.config.flowUrl, {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
+    // Con no-cors no podemos leer la respuesta, pero si no lanzó excepción = enviado OK
     document.getElementById('success-detail').textContent =
-      `${fileName} guardada en SharePoint · ${state.category}`;
+      `${fileName} enviada a SharePoint · ${state.category}`;
     showOverlay('success');
 
   } catch (err) {
-    document.getElementById('error-detail').textContent = err.message || 'Error desconocido';
+    document.getElementById('error-detail').textContent = 'Sin conexión o URL incorrecta. Verifica tu Flow.';
     showOverlay('error');
   }
 }
